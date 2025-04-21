@@ -1,0 +1,204 @@
+// this is the GUI code. it has 4 diff parts. this code is the main class part.
+import javafx.application.Application;
+import javafx.collections.ObservableList;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+// Main class extending JavaFX Application
+public class VeritapGUI extends Application {
+    // Root layout and tables for attendance and logs
+    private BorderPane root;
+    private TableView<ScanLog> logAttendanceTable;
+    private TableView<AttendanceLog> viewLogsTable;
+
+    @Override
+    public void start(Stage primaryStage) {
+        root = new BorderPane();
+
+        // Set the top menu bar
+        MenuBar menuBar = createMenuBar();
+        root.setTop(menuBar);
+
+        // Set the center view to the default: Log Attendance view
+        root.setCenter(createLogAttendanceView());
+
+        // Set up the scene and stage
+        Scene scene = new Scene(root, 800, 600);
+        primaryStage.setTitle("Veritap Attendance System");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    // Method to create the main menu bar
+    private MenuBar createMenuBar() {
+        MenuBar menuBar = new MenuBar();
+
+        // Attendance menu with sub-items
+        Menu attendanceMenu = new Menu("Attendance");
+
+        // Menu item to log attendance
+        MenuItem logAttendanceItem = new MenuItem("Log Attendance");
+        logAttendanceItem.setOnAction(e -> root.setCenter(createLogAttendanceView()));
+
+        // Menu item to view logs
+        MenuItem viewLogsItem = new MenuItem("View Logs");
+        viewLogsItem.setOnAction(e -> root.setCenter(createViewLogsView()));
+
+        attendanceMenu.getItems().addAll(logAttendanceItem, viewLogsItem);
+
+        // Users menu with sub-items
+        Menu userMenu = new Menu("Users");
+
+        // Menu item to add user
+        MenuItem addUserItem = new MenuItem("Add User");
+        addUserItem.setOnAction(e -> root.setCenter(createAddUserView()));
+
+        // Menu item to remove user
+        MenuItem removeUserItem = new MenuItem("Remove User");
+        removeUserItem.setOnAction(e -> root.setCenter(createRemoveUserView()));
+
+        userMenu.getItems().addAll(addUserItem, removeUserItem);
+
+        // Add menus to the menu bar
+        menuBar.getMenus().addAll(attendanceMenu, userMenu);
+        return menuBar;
+    }
+
+    // View to log attendance
+    private VBox createLogAttendanceView() {
+        logAttendanceTable = new TableView<>();
+
+        // Columns for the log attendance table
+        TableColumn<ScanLog, String> tagCol = new TableColumn<>("Tag ID");
+        tagCol.setCellValueFactory(new PropertyValueFactory<>("tagID"));
+
+        TableColumn<ScanLog, String> nameCol = new TableColumn<>("User Name");
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("userName"));
+
+        TableColumn<ScanLog, String> timeCol = new TableColumn<>("Timestamp");
+        timeCol.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
+
+        // Add columns to the table
+        logAttendanceTable.getColumns().addAll(tagCol, nameCol, timeCol);
+
+        // Load data from database
+        logAttendanceTable.setItems(DatabaseUtil.getRecentScans());
+
+        // Refresh button to reload data
+        Button refreshButton = new Button("Refresh");
+        refreshButton.setOnAction(e -> logAttendanceTable.setItems(DatabaseUtil.getRecentScans()));
+
+        // Combine table and button into a VBox
+        VBox view = new VBox(10, refreshButton, logAttendanceTable);
+        return view;
+    }
+
+    // View to display attendance logs
+    private VBox createViewLogsView() {
+        viewLogsTable = new TableView<>();
+
+        // Columns for the view logs table
+        TableColumn<AttendanceLog, String> nameCol = new TableColumn<>("User Name");
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("userName"));
+
+        TableColumn<AttendanceLog, String> timeCol = new TableColumn<>("Timestamp");
+        timeCol.setCellValueFactory(new PropertyValueFactory<>("timestamp"));
+
+        // Add columns to the table
+        viewLogsTable.getColumns().addAll(nameCol, timeCol);
+
+        // Load data from database
+        viewLogsTable.setItems(DatabaseUtil.getAttendanceLogs());
+
+        // Refresh button
+        Button refreshButton = new Button("Refresh");
+        refreshButton.setOnAction(e -> viewLogsTable.setItems(DatabaseUtil.getAttendanceLogs()));
+
+        // Combine into a VBox
+        VBox view = new VBox(10, refreshButton, viewLogsTable);
+        return view;
+    }
+
+    // View to add a new user
+    private VBox createAddUserView() {
+        VBox vbox = new VBox(10);
+
+        // Input fields
+        TextField nameField = new TextField();
+        nameField.setPromptText("User Name");
+
+        TextField rfidField = new TextField();
+        rfidField.setPromptText("RFID Tag");
+
+        // Button to add user
+        Button addButton = new Button("Add User");
+        addButton.setOnAction(e -> {
+            String name = nameField.getText();
+            String rfid = rfidField.getText();
+
+            // Validate input and add user
+            if (!name.isEmpty() && !rfid.isEmpty()) {
+                if (DatabaseUtil.addUser(name, rfid)) {
+                    showAlert(Alert.AlertType.INFORMATION, "User added successfully.");
+                    nameField.clear();
+                    rfidField.clear();
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "RFID tag already exists.");
+                }
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Please fill in all fields.");
+            }
+        });
+
+        // Add components to VBox
+        vbox.getChildren().addAll(new Label("Add User"), nameField, rfidField, addButton);
+        return vbox;
+    }
+
+    // View to remove an existing user
+    private VBox createRemoveUserView() {
+        VBox vbox = new VBox(10);
+
+        // List of users
+        ListView<String> userList = new ListView<>(DatabaseUtil.getUsers());
+
+        // Button to remove selected user
+        Button removeButton = new Button("Remove User");
+        removeButton.setOnAction(e -> {
+            String selected = userList.getSelectionModel().getSelectedItem();
+
+            if (selected != null) {
+                // Extract RFID from selected string
+                String[] parts = selected.split(" - ");
+                if (parts.length == 2) {
+                    String rfid = parts[1];
+                    DatabaseUtil.removeUser(rfid);
+                    userList.setItems(DatabaseUtil.getUsers());
+                    showAlert(Alert.AlertType.INFORMATION, "User removed successfully.");
+                }
+            } else {
+                showAlert(Alert.AlertType.WARNING, "Please select a user to remove.");
+            }
+        });
+
+        // Add components to VBox
+        vbox.getChildren().addAll(new Label("Remove User"), userList, removeButton);
+        return vbox;
+    }
+
+    // Utility method to show alerts
+    private void showAlert(Alert.AlertType type, String message) {
+        Alert alert = new Alert(type);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // Launch the application
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
