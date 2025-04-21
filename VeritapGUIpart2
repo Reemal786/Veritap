@@ -1,0 +1,146 @@
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import java.sql.*;
+
+public class DatabaseUtil {
+    // Singleton database connection instance
+    private static Connection conn;
+
+    // Method to establish and return a SQLite connection
+    public static Connection getConnection() {
+        if (conn == null) {
+            try {
+                // Load SQLite JDBC driver
+                Class.forName("org.sqlite.JDBC");
+                // Connect to the database
+                conn = DriverManager.getConnection("jdbc:sqlite:attendance.db");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return conn;
+    }
+
+    // Retrieves the most recent scan logs (up to 50 records)
+    public static ObservableList<ScanLog> getRecentScans() {
+        ObservableList<ScanLog> scans = FXCollections.observableArrayList();
+        try {
+            Statement stmt = getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT tag_id, timestamp, status FROM scan_logs ORDER BY timestamp DESC LIMIT 50");
+
+            while (rs.next()) {
+                String tagID = rs.getString("tag_id");
+                String timestamp = rs.getString("timestamp");
+                String status = rs.getString("status");
+
+                // Get user name only if the status is 'authorized'
+                String userName = status.equals("authorized") ? getUserName(tagID) : "Unauthorized";
+
+                scans.add(new ScanLog(tagID, userName, timestamp));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return scans;
+    }
+
+    // Retrieves full attendance logs by joining attendance and users tables
+    public static ObservableList<AttendanceLog> getAttendanceLogs() {
+        ObservableList<AttendanceLog> logs = FXCollections.observableArrayList();
+        try {
+            Statement stmt = getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery(
+                "SELECT u.name, a.timestamp FROM attendance a " +
+                "JOIN users u ON a.user_id = u.user_id " +
+                "ORDER BY a.timestamp DESC"
+            );
+
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String timestamp = rs.getString("timestamp");
+                logs.add(new AttendanceLog(name, timestamp));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return logs;
+    }
+
+    // Adds a new user if the RFID tag is unique
+    public static boolean addUser(String name, String rfidTag) {
+        try {
+            // Check if RFID tag already exists
+            PreparedStatement checkStmt = getConnection().prepareStatement(
+                "SELECT COUNT(*) FROM users WHERE rfid_tag = ?"
+            );
+            checkStmt.setString(1, rfidTag);
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.getInt(1) > 0) {
+                return false; // Tag already exists
+            }
+
+            // Insert new user
+            PreparedStatement stmt = getConnection().prepareStatement(
+                "INSERT INTO users (name, rfid_tag) VALUES (?, ?)"
+            );
+            stmt.setString(1, name);
+            stmt.setString(2, rfidTag);
+            stmt.executeUpdate();
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // Removes a user based on RFID tag
+    public static void removeUser(String rfidTag) {
+        try {
+            PreparedStatement stmt = getConnection().prepareStatement(
+                "DELETE FROM users WHERE rfid_tag = ?"
+            );
+            stmt.setString(1, rfidTag);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Returns a list of users formatted as "Name - RFID"
+    public static ObservableList<String> getUsers() {
+        ObservableList<String> users = FXCollections.observableArrayList();
+        try {
+            Statement stmt = getConnection().createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT name, rfid_tag FROM users");
+
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String rfid = rs.getString("rfid_tag");
+                users.add(name + " - " + rfid);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+    // Helper method to get a user's name using their tag ID
+    private static String getUserName(String tagID) {
+        try {
+            PreparedStatement stmt = getConnection().prepareStatement(
+                "SELECT name FROM users WHERE rfid_tag = ?"
+            );
+            stmt.setString(1, tagID);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "Unknown";
+    }
+}
