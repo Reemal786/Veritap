@@ -1,0 +1,35 @@
+import javafx.beans.property.SimpleStringProperty;
+
+// This class represents a single attendance log entry,
+// containing the user name and the time they were logged.
+public class AttendanceLog {
+    // JavaFX property wrappers to allow dynamic updates in the UI (e.g., TableView)
+    private final SimpleStringProperty userName;
+    private final SimpleStringProperty timestamp;
+
+    // Constructor to initialize an attendance log with a user name and timestamp
+    public AttendanceLog(String userName, String timestamp) {
+        this.userName = new SimpleStringProperty(userName);
+        this.timestamp = new SimpleStringProperty(timestamp);
+    }
+
+    // Getter for userName property value
+    public String getUserName() {
+        return userName.get();
+    }
+
+    // Setter to update the userName property
+    public void setUserName(String userName) {
+        this.userName.set(userName);
+    }
+
+    // Getter for timestamp property value
+    public String getTimestamp() {
+        return timestamp.get();
+    }
+
+    // Setter to update the timestamp property
+    public void setTimestamp(String timestamp) {
+        this.timestamp.set(timestamp);
+    }
+}
