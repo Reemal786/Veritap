@@ -1,0 +1,34 @@
+// You can now write unit tests to verify that the database operations are working as expected. Below is an example of unit tests you can write using JUnit.
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class DatabaseHelperTest {
+
+    private DatabaseHelper dbHelper;
+
+    @BeforeEach
+    public void setUp() {
+        dbHelper = new DatabaseHelper();
+        // Create tables and index before each test
+        dbHelper.createTables(); //ensure fresh tables before each test 
+    }
+
+    @Test
+    public void testAddUser() { 
+        assertTrue(dbHelper.addUser("Alice", "987654321"));
+        assertFalse(dbHelper.addUser("Alice", "987654321")); // Duplicate RFID
+    }
+
+    @Test
+    public void testLogAttendance() {
+        dbHelper.addUser("Bob", "1122334455");
+        dbHelper.logAttendance("1122334455");
+        
+        // Assuming that logAttendance works, we'd typically check if the record was inserted correctly
+        // Here, you would need to query the attendance table to verify this in a more sophisticated test setup
+    }
+}
+
+// testing units ^ this is to better understand how users can be added without duplicates, and how attendance can be logged with an RFID Tag
+//We included the index on the rfid_tag column has been added to speed up searches for RFID tags specifically when dealing with large datasets as well
