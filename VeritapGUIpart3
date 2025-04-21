@@ -1,0 +1,46 @@
+import javafx.beans.property.SimpleStringProperty;
+
+// This class represents a scan log entry with tag ID, user name, and timestamp.
+public class ScanLog {
+    // JavaFX property wrappers for observable binding with TableView
+    private final SimpleStringProperty tagID;
+    private final SimpleStringProperty userName;
+    private final SimpleStringProperty timestamp;
+
+    // Constructor to initialize a ScanLog with provided values
+    public ScanLog(String tagID, String userName, String timestamp) {
+        this.tagID = new SimpleStringProperty(tagID);
+        this.userName = new SimpleStringProperty(userName);
+        this.timestamp = new SimpleStringProperty(timestamp);
+    }
+
+    // Getter for tagID
+    public String getTagID() {
+        return tagID.get();
+    }
+
+    // Setter for tagID
+    public void setTagID(String tagID) {
+        this.tagID.set(tagID);
+    }
+
+    // Getter for userName
+    public String getUserName() {
+        return userName.get();
+    }
+
+    // Setter for userName
+    public void setUserName(String userName) {
+        this.userName.set(userName);
+    }
+
+    // Getter for timestamp
+    public String getTimestamp() {
+        return timestamp.get();
+    }
+
+    // Setter for timestamp
+    public void setTimestamp(String timestamp) {
+        this.timestamp.set(timestamp);
+    }
+}
