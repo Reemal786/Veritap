@@ -1,0 +1,33 @@
+//utilizing hashmap which lets us store key-value pairs (key:UID and value: when it was
+//last scanned in miliseconds)
+import java.util.HashMap;
+
+public class DuplicateCheck {
+    // UID is stored as a string bc is constains nums and letters
+    //last scanned is stored as a long which is a really long number 
+    private HashMap<String, Long> scannedTags = new HashMap<>();
+
+    // Set the wait time to 30 seconds (in milliseconds) to determine duplication
+    private static final long wait_period = 30 * 1000; //set to 30 seconds. java uses milliseconds
+
+    // determine deuplication if same rfid scanned within 30 seconds
+    public boolean isDuplicate(String UID_scanned) {
+        long currentTime = System.currentTimeMillis(); //when scanned, gets current time in milliseconds
+
+        if (scannedTags.containsKey(UID_scanned)) {// if rfid scanned has already been scanned (meaning its in
+            //the hashmap)
+            long lastTime = scannedTags.get(UID_scanned); //obtain time this specific repetitive uid was scanned
+
+            // If it was scanned less than 30 seconds ago
+            if (currentTime - lastTime < wait_period) {//expression for determining if the same rfid was 
+                //scanned with 30 seconds
+                return true; //if so, then the rfid is a duplicate 
+            }
+        }
+
+        // if UID isn't a duplicate, update scan time to current time 
+        scannedTags.put(UID_scanned, currentTime); //current time is when same RFID tag is scanned after
+        //30 seconds. time is updated to the second time its scanned
+        return false; // because its not a duplicate
+    }
+}
