@@ -1,0 +1,36 @@
+public class Main {
+    public static void main(String[] args) {
+        // Create an object that tracks duplicate scans
+        DuplicateCheck check_duplicate = new DuplicateCheck();//object to track duplicate scans
+
+        while (true) {
+            // Show message in terminal
+            System.out.println("Welcome! Please Scan Your Card :)");
+
+            // use python script to read UID from RFID card
+            String UID_recieved = RFIDReader.readUID();
+
+            if (UID_recieved != null) {//if UID is successfully recived
+                System.out.println("UID: " + UID_recieved);//print the UID
+
+                // if its a duplicate scan of card 
+                if (check_duplicate.isDuplicate(UID_recieved)) {
+                    LCDHub.displayMessage("Duplicate Scan");//display message
+                } 
+                else {//if its not a duplicate
+                    LCDHub.displayMessage("Scan Successful");//display message
+                    LCDHub.displayRTC(); // Show current time
+                }
+            } else {
+                LCDHub.displayMessage("Try Again");
+            }
+
+            // Optional: short pause before scanning again (1 second)
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                System.out.println("Sleep interrupted.");
+            }
+        }
+    }
+}
