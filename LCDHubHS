@@ -1,0 +1,27 @@
+
+public class LCDHub {
+    // displays message on LCD using Python script
+    public static void displayMessage(String message) {//method sends message to LCD
+        try {
+            ProcessBuilder builder = new ProcessBuilder("python3", "/home/hoorr/write_lcd.py", message);
+            //process builder used to run Python script and passing the message as an argument
+            //python3: runns python 
+            //message: the message taken from script to show on lcd
+
+            builder.start();//starts the script
+        } catch (Exception error_lcd) {//if anything goes wrong, assign the error to error_lcd
+            System.out.println("LCD Error: " + error_lcd.getMessage()); //print the lcd error
+        }
+    }
+
+    // method displays current time from RTC to LCD
+    public static void displayRTC() {
+        try {
+            ProcessBuilder builder = new ProcessBuilder("python3", "/home/hoorr/rtc_time.py");
+            //runs python script
+            builder.start(); //starts python script
+        } catch (Exception error_rtc) {//if anything goes wrong, assign error to error_rtc
+            System.out.println("RTC Error: " + error_rtc.getMessage());//print error 
+        }
+    }
+}
