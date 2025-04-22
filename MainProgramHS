@@ -25,11 +25,10 @@ public class Main {
                 LCDHub.displayMessage("Try Again");
             }
 
-            // Optional: short pause before scanning again (1 second)
             try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                System.out.println("Sleep interrupted.");
+                Thread.sleep(1000); //allows for 1 second of pause between scans 
+            } catch (InterruptedException scan_error) {//if anything goes wrong and 1 second isn't allowed
+                System.out.println("Sleep interrupted.");//print this to LCD
             }
         }
     }
