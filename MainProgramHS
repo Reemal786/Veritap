@@ -1,5 +1,8 @@
 public class Main {
     public static void main(String[] args) {
+
+        DatabaseHelper dbHelper = new DatabaseHelper();
+        DatabaseHelper.createTables(); // Ensure tables exist   
         // Create an object that tracks duplicate scans
         DuplicateCheck check_duplicate = new DuplicateCheck();//object to track duplicate scans
 
@@ -20,15 +23,18 @@ public class Main {
                 else {//if its not a duplicate
                     LCDHub.displayMessage("Scan Successful");//display message
                     LCDHub.displayRTC(); // Show current time
+                      // NEW: Log attendance in the database
+                        dbHelper.logAttendance(UID_recieved);
                 }
             } else {
                 LCDHub.displayMessage("Try Again");
             }
 
+            // Optional: short pause before scanning again (1 second)
             try {
-                Thread.sleep(1000); //allows for 1 second of pause between scans 
-            } catch (InterruptedException scan_error) {//if anything goes wrong and 1 second isn't allowed
-                System.out.println("Sleep interrupted.");//print this to LCD
+                Thread.sleep(1000); //allows for 1 second between scanning 
+            } catch (InterruptedException scan_error) {//if 1 second doesn't execute 
+                System.out.println("Sleep interrupted.");//print this 
             }
         }
     }
