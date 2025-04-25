@@ -2,7 +2,8 @@
 import board
 import busio #allows I2C comm
 import adafruit_ds3231 #Library for RTC module
-from RPLCD.i2c import CharLCD #LCD library for I2C comm from time import sleep #time
+from RPLCD.i2c import CharLCD #LCD library for I2C comm 
+from time import sleep #time
 from datetime import datetime #date
 # set up I2C comm using Pi's SDA and SCL
 i2c = busio.I2C (board. SCL, board.SDA)
