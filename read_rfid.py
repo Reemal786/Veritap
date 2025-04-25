@@ -8,7 +8,7 @@ reader SimpleMFRC522()
 
 try: #reads the card and assigns the ID to variable id
   id = reader.read_id()
-  print("Card detected!") #if the card is accepted it will print this statement print(id) #the associated id number will be printed
+  print("Card detected!") #if the card is accepted it will print this statement print(id) 
   print(id) # the associated id number will be printed
 #when something goes wrong
 except Exception as error: #exception is the default type of error
