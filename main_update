@@ -1,0 +1,44 @@
+public class Main {
+    public static void main(String[] args) {
+        // Ensure tables exist
+        DatabaseHelper.createTables();
+
+        // Create an object that tracks duplicate scans
+        DuplicateCheck checkDuplicate = new DuplicateCheck();
+
+        // Start the RFID scanning loop in a separate thread
+        Thread scannerThread = new Thread(() -> {
+            while (true) {
+                System.out.println("Welcome! Please Scan Your Card :)");
+
+                String uidReceived = RFIDReader.readUID();
+
+                if (uidReceived != null) {
+                    System.out.println("UID: " + uidReceived);
+
+                    if (checkDuplicate.isDuplicate(uidReceived)) {
+                        LCDHub.displayMessage("Duplicate Scan");
+                    } else {
+                        LCDHub.displayMessage("Scan Successful");
+                        LCDHub.displayRTC();
+                        DatabaseHelper.logAttendance(uidReceived);
+                    }
+                } else {
+                    LCDHub.displayMessage("Try Again");
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException scanError) {
+                    System.out.println("Sleep interrupted.");
+                    break;
+                }
+            }
+        });
+        scannerThread.setDaemon(true); // Make the thread a daemon so it stops when the GUI closes
+        scannerThread.start();
+
+        // Launch the GUI
+        VeritapGUI.main(args);
+    }
+}
