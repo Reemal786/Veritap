@@ -13,7 +13,7 @@ public class DatabaseUtil {
                 // Load SQLite JDBC driver
                 Class.forName("org.sqlite.JDBC");
                 // Connect to the database
-                conn = DriverManager.getConnection("jdbc:sqlite:attendance.db");
+                conn = DriverManager.getConnection("jdbc:h2:./attendance_system");
             } catch (Exception e) {
                 e.printStackTrace();
             }
