@@ -4,7 +4,7 @@ from mfrc522 import SimpleMFRC522
 #GPIO (gen purpose input/output) library
 import RPi.GPIO as GPIO
 #assigns the RFID scanner to variable reader
-reader SimpleMFRC522()
+reader = SimpleMFRC522()
 
 try: #reads the card and assigns the ID to variable id
   id = reader.read_id()
