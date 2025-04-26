@@ -1,0 +1,134 @@
+import java.sql.*;  // Import Java SQL classes for database operations (Connection, Statement, etc.)
+
+// This class handles everything related to the database for the RFID attendance system
+public class DatabaseHelper {
+
+    // SQLite database file location
+    private static final String DB_URL = "jdbc:sqlite:attendance_system.db";
+
+    // 1. Creating tables and index if they don’t already exist
+    public static void createTables() {
+        // Try-with-resources ensures that the connection and statement are automatically closed
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             Statement stmt = conn.createStatement()) {
+
+            // SQL command to create a "users" table
+            String createUsersTableSQL = "CREATE TABLE IF NOT EXISTS users (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +  // Each user has a unique auto-increment ID
+                    "name TEXT NOT NULL, " +                     // Stores the user's name
+                    "rfid_tag TEXT NOT NULL UNIQUE)";            // Stores the user's RFID tag; must be unique
+
+            // SQL to create the "attendance" table
+            String createAttendanceTableSQL = "CREATE TABLE IF NOT EXISTS attendance (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT, " +         // Each record has its own ID
+                    "user_id INTEGER, " +                              // Foreign key from the users table
+                    "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, " + // Automatically stores the current time
+                    "status TEXT CHECK(status IN ('Present', 'Absent')), " + // Only allows "Present" or "Absent"
+                    "FOREIGN KEY(user_id) REFERENCES users(id))";     // Links back to the users table
+
+            // This index helps speed up lookups by RFID tag (optimization)
+            String createIndexSQL = "CREATE INDEX IF NOT EXISTS idx_rfid_tag ON users(rfid_tag)";
+
+            // Run all the SQL commands
+            stmt.execute(createUsersTableSQL);
+            stmt.execute(createAttendanceTableSQL);
+            stmt.execute(createIndexSQL);
+
+            System.out.println("Tables created and index added.");
+        } catch (SQLException e) {
+            System.out.println("Error creating tables and index: " + e.getMessage());
+        }
+    }
+
+    // 2. Checks if the RFID tag already exists in the users table
+    public boolean isRfidTagDuplicate(String rfidTag) {
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement("SELECT 1 FROM users WHERE rfid_tag = ? LIMIT 1")) {
+
+            pstmt.setString(1, rfidTag);  // Replace ? with the scanned RFID tag
+
+            // Execute the query
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();  // If there's a match, the tag is a duplicate
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error checking RFID tag: " + e.getMessage());
+            return false;  // Assume it's not a duplicate if an error occurs
+        }
+    }
+
+    // 3. Adds a new user to the database
+    public boolean addUser(String name, String rfidTag) {
+        // First, check if the RFID is already in use
+        if (isRfidTagDuplicate(rfidTag)) {
+            System.out.println("Error: RFID tag already exists.");
+            return false;
+        }
+
+        // If it's unique, insert the new user
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement("INSERT INTO users (name, rfid_tag) VALUES (?, ?)")) {
+
+            pstmt.setString(1, name);       // First ? is the user's name
+            pstmt.setString(2, rfidTag);    // Second ? is the RFID tag
+            pstmt.executeUpdate();          // Run the insert command
+
+            System.out.println("User added: " + name);
+            return true;
+
+        } catch (SQLException e) {
+            System.out.println("Error adding user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // 4. Logs attendance using a scanned RFID tag
+    public void logAttendance(String rfidTag) {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+
+            // First, find the user by the RFID tag
+            String getUserSql = "SELECT id, name FROM users WHERE rfid_tag = ?";
+            try (PreparedStatement pstmt = conn.prepareStatement(getUserSql)) {
+                pstmt.setString(1, rfidTag);  // Substitute ? with the actual tag
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        int userId = rs.getInt("id");       // Get user ID
+                        String name = rs.getString("name"); // Get user name
+
+                        // Log "Present" in the attendance table
+                        String insertAttendanceSQL = "INSERT INTO attendance (user_id, status) VALUES (?, 'Present')";
+                        try (PreparedStatement insertPstmt = conn.prepareStatement(insertAttendanceSQL)) {
+                            insertPstmt.setInt(1, userId);        // Insert user ID
+                            insertPstmt.executeUpdate();          // Save attendance
+                            System.out.println("Attendance logged: " + name + " (" + rfidTag + ")");
+                        }
+
+                    } else {
+                        // If the RFID doesn't match any user
+                        System.out.println("RFID tag not found: " + rfidTag);
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Error logging attendance: " + e.getMessage());
+        }
+    }
+
+    // 6. This is the main test method  (it runs when the program is executed)
+    public static void main(String[] args) {
+        DatabaseHelper dbHelper = new DatabaseHelper();  // Create an instance of our class
+
+        createTables();  // Step 1: Ensure the tables exist
+
+        // Step 3: Pre-load two users into the system
+        dbHelper.addUser("Wafa Elmannai", "#402027774845");
+        dbHelper.addUser("Yi Wang", "#704366129927");
+
+        // Step 4: Simulate RFID scans for those users
+        dbHelper.logAttendance("#402027774845");  // Wafa's attendance logged
+        dbHelper.logAttendance("#704366129927");  // Yi's attendance logged
+    }
+}
