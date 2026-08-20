@@ -84,11 +84,6 @@ Enable professors to begin teaching immediately rather than spending the beginni
 Student Confirmation
 ```
 
-## Purpose
-
-VeriTap was developed to explore how **RFID technology, databases, and software interfaces** can be integrated into a complete embedded system.
-
-The project demonstrates communication between physical hardware and software while automating a real-world process: **student attendance tracking**.
 
 ## Future Improvements
 
