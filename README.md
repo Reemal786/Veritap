@@ -1,4 +1,4 @@
-# VeriTap — RFID Student Attendance System
+# VeriTap — RFID Student Attendance System 
 
 **VeriTap** VeriTap is an RFID-based student attendance system designed to streamline classroom attendance and reduce the time professors spend manually recording student presence.
 
